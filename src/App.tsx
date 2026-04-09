@@ -3,9 +3,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 const App = () => {
   return (
     <TooltipProvider>
-      <h1 className="text-3xl font-bold underline text-blue-600">
-        Tailwind is Working!
-      </h1>
+      <h1 className="text-3xl font-bold text-blue-600 underline">Tailwind is Working!</h1>
     </TooltipProvider>
   );
 };
