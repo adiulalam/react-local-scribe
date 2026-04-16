@@ -31,9 +31,9 @@ export const DownloadProgress = ({ progressItems }: DownloadProgressProps) => {
               <span className="w-48 truncate" title={data.file}>
                 {data.file}
               </span>
-              <span>{Math.round(data.progress || 0)}%</span>
+              <span>{data.status === "done" ? 100 : Math.round(data.progress || 0)}%</span>
             </div>
-            <Progress value={data.progress || 0} className="h-1.5" />
+            <Progress value={data.status === "done" ? 100 : data.progress || 0} className="h-1.5" />
           </div>
         ))}
       </div>
