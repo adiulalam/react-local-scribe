@@ -3,13 +3,13 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { DownloadProgress, type ProgressInfo } from "@/components/ui/download-progress";
 
-interface TranscriptionStepProps {
-  audioData: Float32Array;
-  onNext: (transcription: string) => void;
+interface SummarizationStepProps {
+  transcription: string;
+  onNext: (summary: string) => void;
 }
 
-export const TranscriptionStep = ({ audioData, onNext }: TranscriptionStepProps) => {
-  const [transcription, setTranscription] = useState("");
+export const SummarizationStep = ({ transcription, onNext }: SummarizationStepProps) => {
+  const [summary, setSummary] = useState("");
   const [status, setStatus] = useState<
     "initializing" | "loading" | "processing" | "complete" | "error"
   >("initializing");
@@ -17,26 +17,25 @@ export const TranscriptionStep = ({ audioData, onNext }: TranscriptionStepProps)
   const [progressItems, setProgressItems] = useState<Record<string, ProgressInfo>>({});
 
   const worker = useRef<Worker | null>(null);
-  const transcriptionStarted = useRef(false);
+  const summarizationStarted = useRef(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.scrollTop = textareaRef.current.scrollHeight;
     }
-  }, [transcription]);
+  }, [summary]);
 
   useEffect(() => {
-    if (!audioData) {
+    if (!transcription || transcription.trim() === "") {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setStatus("error");
-      setErrorMsg("No audio data provided. Please ensure Step 1 completed successfully.");
+      setErrorMsg("No transcription provided. Please ensure Step 2 completed successfully.");
       return;
     }
 
     if (!worker.current) {
-      // Instantiate worker
-      worker.current = new Worker(new URL("../../../workers/whisper.worker.ts", import.meta.url), {
+      worker.current = new Worker(new URL("../../../workers/summary.worker.ts", import.meta.url), {
         type: "module",
       });
 
@@ -50,20 +49,20 @@ export const TranscriptionStep = ({ audioData, onNext }: TranscriptionStepProps)
             break;
           case "ready":
             setProgressItems({}); // Clear download progress
-            if (!transcriptionStarted.current) {
-              transcriptionStarted.current = true;
-              worker.current?.postMessage({ type: "process", audio: audioData });
+            if (!summarizationStarted.current) {
+              summarizationStarted.current = true;
+              worker.current?.postMessage({ type: "process", text: transcription });
             }
             break;
           case "processing":
             setStatus("processing");
             break;
           case "update":
-            setTranscription((prev) => prev + msg.output);
+            setSummary((prev) => prev + msg.output);
             break;
           case "complete":
             setStatus("complete");
-            setTranscription(msg.result);
+            setSummary(msg.result);
             break;
           case "error":
             setStatus("error");
@@ -72,35 +71,33 @@ export const TranscriptionStep = ({ audioData, onNext }: TranscriptionStepProps)
         }
       });
 
-      // Start the worker model load
       worker.current.postMessage({ type: "load" });
     }
 
     return () => {
-      // Clean up the worker if the component completely unmounts
       worker.current?.terminate();
       worker.current = null;
     };
-  }, [audioData]);
+  }, [transcription]);
 
   return (
     <div className="space-y-4">
       <DownloadProgress progressItems={progressItems} />
 
       {status === "initializing" && (
-        <p className="text-muted-foreground text-sm">Initializing Web Worker...</p>
+        <p className="text-muted-foreground text-sm">Initializing Summarization Worker...</p>
       )}
 
       {status === "loading" && (
         <p className="text-muted-foreground text-sm">
-          Checking cache and downloading required model chunks...
+          Downloading or loading DistilBART summary model chunks...
         </p>
       )}
 
       {status === "processing" && (
         <div className="flex items-center gap-3">
           <p className="text-muted-foreground text-sm">
-            Transcribing audio locally... This may take a moment.
+            Summarizing text locally...
           </p>
         </div>
       )}
@@ -111,19 +108,19 @@ export const TranscriptionStep = ({ audioData, onNext }: TranscriptionStepProps)
         <div className="space-y-4">
           <Textarea
             ref={textareaRef}
-            value={transcription}
-            onChange={(e) => setTranscription(e.target.value)}
-            rows={10}
+            value={summary}
+            onChange={(e) => setSummary(e.target.value)}
+            rows={8}
             className="max-h-52 w-full resize-y text-base"
             placeholder={
               status === "processing"
-                ? "Transcribing... Text will appear here."
-                : "Review and edit the generated transcription..."
+                ? "Summarizing... Text will appear here."
+                : "Review and edit the generated summary..."
             }
           />
           <div className="flex justify-end">
-            <Button onClick={() => onNext(transcription)} disabled={status !== "complete"}>
-              Continue to Summarization
+            <Button onClick={() => onNext(summary)} disabled={status !== "complete"}>
+              Continue to Export
             </Button>
           </div>
         </div>

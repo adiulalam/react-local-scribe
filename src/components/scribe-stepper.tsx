@@ -5,6 +5,7 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { AudioInputStep } from "./steps/step-1";
 import { TranscriptionStep } from "./steps/step-2";
+import { SummarizationStep } from "./steps/step-3";
 
 // Define the steps
 const { Stepper } = defineStepper(
@@ -122,9 +123,13 @@ export function ScribeStepper() {
                               />
                             ),
                             "step-3": () => (
-                              <div className="text-muted-foreground text-sm">
-                                Summarization Step (Coming Soon)
-                              </div>
+                              <SummarizationStep
+                                transcription={formData.transcription!}
+                                onNext={(summary) => {
+                                  setFormData((prev) => ({ ...prev, summary }));
+                                  stepper.navigation.next();
+                                }}
+                              />
                             ),
                             "step-4": () => (
                               <div className="text-muted-foreground text-sm">
