@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { AudioInputStep } from "./steps/step-1";
 import { TranscriptionStep } from "./steps/step-2";
 import { SummarizationStep } from "./steps/step-3";
+import { ExportStep } from "./steps/step-4";
 
 // Define the steps
 const { Stepper } = defineStepper(
@@ -132,9 +133,10 @@ export function ScribeStepper() {
                               />
                             ),
                             "step-4": () => (
-                              <div className="text-muted-foreground text-sm">
-                                Export Step (Coming Soon)
-                              </div>
+                              <ExportStep
+                                transcription={formData.transcription}
+                                summary={formData.summary}
+                              />
                             ),
                           })}
                         </div>
