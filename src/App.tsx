@@ -1,10 +1,10 @@
-import { TooltipProvider } from "@/components/ui/tooltip";
+import { ScribeStepper } from "@/components/scribe-stepper";
 
 const App = () => {
   return (
-    <TooltipProvider>
-      <h1 className="text-3xl font-bold text-blue-600 underline">Tailwind is Working!</h1>
-    </TooltipProvider>
+    <div className="bg-background text-foreground flex min-h-screen flex-col items-center py-10">
+      <ScribeStepper />
+    </div>
   );
 };
 
