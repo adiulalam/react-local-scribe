@@ -27,7 +27,7 @@ class PipelineSingleton {
 }
 
 self.addEventListener("message", async (event) => {
-  const { type, text } = event.data;
+  const { type, text, options } = event.data;
 
   if (type === "load") {
     try {
@@ -53,8 +53,8 @@ self.addEventListener("message", async (event) => {
       });
 
       const result = await summarizer(text, {
-        max_new_tokens: 150,
-        min_length: 30,
+        max_new_tokens: options?.max_length || 150,
+        min_length: options?.min_length || 30,
         streamer,
       });
 

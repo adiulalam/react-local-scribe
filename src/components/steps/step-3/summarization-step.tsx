@@ -1,39 +1,40 @@
 import { useState, useEffect, useRef } from "react";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { DownloadProgress, type ProgressInfo } from "@/components/ui/download-progress";
+import { ModeSelector } from "./mode-selector";
+import { SummaryDisplay } from "./summary-display";
+import { type SummaryMode, SUMMARY_OPTIONS } from "./types";
 
 interface SummarizationStepProps {
   transcription: string;
   onNext: (summary: string) => void;
 }
 
+type Status = "idle" | "initializing" | "loading" | "processing" | "complete" | "error";
+
 export const SummarizationStep = ({ transcription, onNext }: SummarizationStepProps) => {
   const [summary, setSummary] = useState("");
-  const [status, setStatus] = useState<
-    "initializing" | "loading" | "processing" | "complete" | "error"
-  >("initializing");
+  const [mode, setMode] = useState<SummaryMode>("Default");
+  const [status, setStatus] = useState<Status>("idle");
   const [errorMsg, setErrorMsg] = useState("");
   const [progressItems, setProgressItems] = useState<Record<string, ProgressInfo>>({});
 
   const worker = useRef<Worker | null>(null);
   const summarizationStarted = useRef(false);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-  useEffect(() => {
-    if (textareaRef.current) {
-      textareaRef.current.scrollTop = textareaRef.current.scrollHeight;
-    }
-  }, [summary]);
 
   useEffect(() => {
     if (!transcription || transcription.trim() === "") {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setStatus("error");
       setErrorMsg("No transcription provided. Please ensure Step 2 completed successfully.");
-      return;
     }
 
+    return () => {
+      worker.current?.terminate();
+      worker.current = null;
+    };
+  }, [transcription]);
+
+  const handleGenerate = () => {
     if (!worker.current) {
       worker.current = new Worker(new URL("../../../workers/summary.worker.ts", import.meta.url), {
         type: "module",
@@ -51,7 +52,11 @@ export const SummarizationStep = ({ transcription, onNext }: SummarizationStepPr
             setProgressItems({}); // Clear download progress
             if (!summarizationStarted.current) {
               summarizationStarted.current = true;
-              worker.current?.postMessage({ type: "process", text: transcription });
+              worker.current?.postMessage({
+                type: "process",
+                text: transcription,
+                options: SUMMARY_OPTIONS[mode],
+              });
             }
             break;
           case "processing":
@@ -70,61 +75,29 @@ export const SummarizationStep = ({ transcription, onNext }: SummarizationStepPr
             break;
         }
       });
-
-      worker.current.postMessage({ type: "load" });
     }
 
-    return () => {
-      worker.current?.terminate();
-      worker.current = null;
-    };
-  }, [transcription]);
+    setStatus("initializing");
+    setSummary("");
+    summarizationStarted.current = false;
+    worker.current.postMessage({ type: "load" });
+  };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <DownloadProgress progressItems={progressItems} />
 
-      {status === "initializing" && (
-        <p className="text-muted-foreground text-sm">Initializing Summarization Worker...</p>
+      {status === "idle" && (
+        <ModeSelector mode={mode} onModeChange={setMode} onGenerate={handleGenerate} />
       )}
 
-      {status === "loading" && (
-        <p className="text-muted-foreground text-sm">
-          Downloading or loading DistilBART summary model chunks...
-        </p>
-      )}
-
-      {status === "processing" && (
-        <div className="flex items-center gap-3">
-          <p className="text-muted-foreground text-sm">
-            Summarizing text locally...
-          </p>
-        </div>
-      )}
-
-      {status === "error" && <p className="text-destructive text-sm">{errorMsg}</p>}
-
-      {(status === "processing" || status === "complete") && (
-        <div className="space-y-4">
-          <Textarea
-            ref={textareaRef}
-            value={summary}
-            onChange={(e) => setSummary(e.target.value)}
-            rows={8}
-            className="max-h-52 w-full resize-y text-base"
-            placeholder={
-              status === "processing"
-                ? "Summarizing... Text will appear here."
-                : "Review and edit the generated summary..."
-            }
-          />
-          <div className="flex justify-end">
-            <Button onClick={() => onNext(summary)} disabled={status !== "complete"}>
-              Continue to Export
-            </Button>
-          </div>
-        </div>
-      )}
+      <SummaryDisplay
+        status={status}
+        summary={summary}
+        onSummaryChange={setSummary}
+        errorMsg={errorMsg}
+        onContinue={() => onNext(summary)}
+      />
     </div>
   );
 };
