@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { DownloadProgress, type ProgressInfo } from "@/components/ui/download-progress";
 import { ModeSelector } from "./mode-selector";
 import { SummaryDisplay } from "./summary-display";
-import { type SummaryMode, SUMMARY_OPTIONS } from "./types";
+import { type SummaryMode, SUMMARY_OPTIONS } from "@/types/summary";
 
 interface SummarizationStepProps {
   transcription: string;
@@ -36,7 +36,7 @@ export const SummarizationStep = ({ transcription, onNext }: SummarizationStepPr
 
   const handleGenerate = () => {
     if (!worker.current) {
-      worker.current = new Worker(new URL("../../../workers/summary.worker.ts", import.meta.url), {
+      worker.current = new Worker(new URL("../../../lib/workers/summary.worker.ts", import.meta.url), {
         type: "module",
       });
 

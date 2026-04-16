@@ -7,7 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { type SummaryMode, SUMMARY_OPTIONS } from "./types";
+import { type SummaryMode, SUMMARY_OPTIONS } from "@/types/summary";
 
 interface ModeSelectorProps {
   mode: SummaryMode;
