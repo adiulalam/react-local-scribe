@@ -1,18 +1,13 @@
-import React, { useState, useRef, useEffect } from "react";
-import { Button } from "@/components/ui/button";
+import { useState } from "react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { FieldGroup, Field, FieldLabel } from "@/components/ui/field";
+import { FileUploadInput, MicrophoneInput } from ".";
 
 export const AudioInputStep = ({ onNext }: { onNext: (audioData: Float32Array) => void }) => {
   const [source, setSource] = useState<"file" | "mic">("file");
-  const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const chunksRef = useRef<Blob[]>([]);
 
   const handleProcessBlob = async (blob: Blob) => {
     setIsProcessing(true);
@@ -34,59 +29,6 @@ export const AudioInputStep = ({ onNext }: { onNext: (audioData: Float32Array) =
       setIsProcessing(false);
     }
   };
-
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      await handleProcessBlob(file);
-    }
-  };
-
-  const startRecording = async () => {
-    setErrorMsg(null);
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
-      mediaRecorderRef.current = mediaRecorder;
-      chunksRef.current = [];
-
-      mediaRecorder.ondataavailable = (e) => {
-        if (e.data.size > 0) {
-          chunksRef.current.push(e.data);
-        }
-      };
-
-      mediaRecorder.onstop = () => {
-        const blob = new Blob(chunksRef.current, { type: "audio/webm" });
-        handleProcessBlob(blob);
-        // Stop all tracks to turn off the microphone
-        mediaRecorderRef.current?.stream.getTracks().forEach((track) => track.stop());
-      };
-
-      mediaRecorder.start();
-      setIsRecording(true);
-    } catch (error) {
-      console.error("Microphone permission denied or error", error);
-      setErrorMsg("Microphone permission denied or an error occurred.");
-    }
-  };
-
-  const stopRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop();
-      setIsRecording(false);
-    }
-  };
-
-  useEffect(() => {
-    return () => {
-      // Cleanup on unmount
-      if (mediaRecorderRef.current && isRecording) {
-        mediaRecorderRef.current.stop();
-        mediaRecorderRef.current.stream.getTracks().forEach((track) => track.stop());
-      }
-    };
-  }, [isRecording]);
 
   return (
     <div className="space-y-6">
@@ -115,36 +57,15 @@ export const AudioInputStep = ({ onNext }: { onNext: (audioData: Float32Array) =
       </FieldGroup>
 
       {source === "file" && (
-        <div className="space-y-2">
-          <Label htmlFor="audio-file">Upload Audio</Label>
-          <Input
-            id="audio-file"
-            type="file"
-            accept="audio/*"
-            onChange={handleFileChange}
-            disabled={isProcessing}
-            className="cursor-pointer"
-          />
-        </div>
+        <FileUploadInput onBlobReady={handleProcessBlob} disabled={isProcessing} />
       )}
 
       {source === "mic" && (
-        <div className="flex flex-col items-start gap-4">
-          <Label>Record Audio</Label>
-          {!isRecording ? (
-            <Button onClick={startRecording} disabled={isProcessing}>
-              Start Recording
-            </Button>
-          ) : (
-            <div className="flex items-center gap-4">
-              <div className="h-3 w-3 rounded-full bg-red-500" />
-              <span className="text-sm font-medium">Recording...</span>
-              <Button onClick={stopRecording} variant="destructive">
-                Stop Recording
-              </Button>
-            </div>
-          )}
-        </div>
+        <MicrophoneInput
+          onBlobReady={handleProcessBlob}
+          onError={setErrorMsg}
+          disabled={isProcessing}
+        />
       )}
 
       {isProcessing && <p className="text-muted-foreground text-sm">Processing audio...</p>}
