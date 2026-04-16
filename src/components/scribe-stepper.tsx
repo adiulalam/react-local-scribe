@@ -4,6 +4,7 @@ import React, { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { AudioInputStep } from "./steps/step-1";
+import { TranscriptionStep } from "./steps/step-2";
 
 // Define the steps
 const { Stepper } = defineStepper(
@@ -47,11 +48,10 @@ const StepperSeparator = ({ status, isLast }: { status: StepStatus; isLast: bool
 };
 
 export function ScribeStepper() {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [formData, setFormData] = useState<ScribeState>({});
 
   return (
-    <div className="bg-card mx-auto w-full max-w-2xl space-y-8 rounded-xl border p-6 shadow-sm">
+    <div className="bg-card mx-auto w-full max-w-4xl space-y-8 rounded-xl border p-6 shadow-sm">
       <div className="mb-4">
         <h2 className="text-2xl font-bold tracking-tight">Local Scribe</h2>
         <p className="text-muted-foreground text-sm">
@@ -113,9 +113,13 @@ export function ScribeStepper() {
                               />
                             ),
                             "step-2": () => (
-                              <div className="text-muted-foreground text-sm">
-                                Transcription Step (Coming Soon)
-                              </div>
+                              <TranscriptionStep
+                                audioData={formData.audioData!}
+                                onNext={(transcription) => {
+                                  setFormData((prev) => ({ ...prev, transcription }));
+                                  stepper.navigation.next();
+                                }}
+                              />
                             ),
                             "step-3": () => (
                               <div className="text-muted-foreground text-sm">
