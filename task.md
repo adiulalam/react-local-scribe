@@ -10,7 +10,7 @@ For the UI, we will use the simple Stepper component from `@stepperize/react` an
 
 Critical design and architecture rules:
 
-- **State Management:** Wrap the entire Stepper in a `FormProvider` from `react-hook-form`. Each step component must use `useFormContext()` to access and update shared state (e.g., the extracted text and final summary) instead of passing props down.
+- **State Management:** See example in `src/components/stepper-with-form.tsx` or if needed use react context.
 - **Web Workers:** All `Transformers.js` model downloading and inference MUST be done inside Web Workers. The main thread must never be blocked. Use `postMessage` to send data and receive progress/output from the workers.
 - The Stepper should be a vertical stepper (like the `stepper-with-variants.tsx` example).
 - Users cannot go back to previous steps; instead, a "Start Over" button should be displayed that resets the form and stepper.
@@ -30,7 +30,7 @@ We need to create a form that will allow the user to select an audio file or rec
 - Microphone: Use the browser's `MediaRecorder` API. Provide "Start Recording" and "Stop Recording" buttons. Handle microphone permissions gracefully. When recording stops, combine the chunks into a Blob.
 
 **Audio Preprocessing:** Whisper requires specific audio formats. Whether the user uploads a file or records a WebM blob via microphone, you must use the browser's `AudioContext` API to decode the audio, resample it to a 16kHz sample rate, and convert it into a mono `Float32Array`.
-Once the `Float32Array` is generated, save it to the form state and automatically proceed to Step 2.
+Once the `Float32Array` is generated, save it to the form state.
 
 ## Step 2: Text Extraction (Transcription)
 
