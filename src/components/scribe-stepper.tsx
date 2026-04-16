@@ -149,7 +149,14 @@ export function ScribeStepper() {
               })}
             </Stepper.List>
 
-            <div className="mt-6 flex justify-end border-t pt-6">
+            <div className="mt-6 flex justify-between border-t pt-6">
+              {!stepper.state.isFirst ? (
+                <Button variant="outline" onClick={() => stepper.navigation.prev()}>
+                  Back
+                </Button>
+              ) : (
+                <div /> // Spacing preservation
+              )}
               <Button
                 variant="outline"
                 onClick={() => {
