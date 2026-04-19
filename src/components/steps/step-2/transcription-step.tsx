@@ -36,9 +36,12 @@ export const TranscriptionStep = ({ audioData, onNext }: TranscriptionStepProps)
 
     if (!worker.current) {
       // Instantiate worker
-      worker.current = new Worker(new URL("../../../lib/workers/whisper.worker.ts", import.meta.url), {
-        type: "module",
-      });
+      worker.current = new Worker(
+        new URL("../../../lib/workers/whisper.worker.ts", import.meta.url),
+        {
+          type: "module",
+        }
+      );
 
       worker.current.addEventListener("message", (e) => {
         const msg = e.data;

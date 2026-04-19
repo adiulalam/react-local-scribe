@@ -36,9 +36,12 @@ export const SummarizationStep = ({ transcription, onNext }: SummarizationStepPr
 
   const handleGenerate = () => {
     if (!worker.current) {
-      worker.current = new Worker(new URL("../../../lib/workers/summary.worker.ts", import.meta.url), {
-        type: "module",
-      });
+      worker.current = new Worker(
+        new URL("../../../lib/workers/summary.worker.ts", import.meta.url),
+        {
+          type: "module",
+        }
+      );
 
       worker.current.addEventListener("message", (e) => {
         const msg = e.data;
