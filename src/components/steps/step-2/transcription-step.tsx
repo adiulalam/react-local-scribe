@@ -8,11 +8,11 @@ interface TranscriptionStepProps {
   onNext: (transcription: string) => void;
 }
 
+type TStatus = "initializing" | "loading" | "processing" | "complete" | "error";
+
 export const TranscriptionStep = ({ audioData, onNext }: TranscriptionStepProps) => {
   const [transcription, setTranscription] = useState("");
-  const [status, setStatus] = useState<
-    "initializing" | "loading" | "processing" | "complete" | "error"
-  >("initializing");
+  const [status, setStatus] = useState<TStatus>("initializing");
   const [errorMsg, setErrorMsg] = useState("");
   const [progressItems, setProgressItems] = useState<Record<string, ProgressInfo>>({});
 
